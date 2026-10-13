@@ -1,0 +1,95 @@
+:root {
+  --mud: #16211c;      /* mangrove night */
+  --panel: #1f2d26;
+  --line: #2f4238;
+  --text: #e4ebe2;
+  --muted: #8fa396;
+  --tide: #5fb3a8;     /* tidal water */
+  --amber: #e9a23b;
+  --fire: #e25b45;
+  --head: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "Source Sans 3", "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--mud); color: var(--text); font: 15px/1.5 var(--body); }
+code { background: var(--line); padding: 1px 6px; border-radius: 3px; margin: 0 4px; }
+button {
+  font: 600 14px var(--body); color: var(--mud); background: var(--tide);
+  border: 0; border-radius: 4px; padding: 6px 12px; cursor: pointer;
+}
+button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+.shell { max-width: 1440px; margin: 0 auto; padding: 20px; }
+
+.top { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+.top h1 { font: 700 44px/1 var(--head); margin: 0; letter-spacing: 0.5px; }
+.sub { margin: 4px 0 0; color: var(--muted); }
+.threat { display: flex; align-items: baseline; gap: 10px; }
+.threat strong { font: 700 56px/1 var(--head); color: var(--muted); }
+.threat.hot strong { color: var(--fire); }
+.threat span { color: var(--muted); max-width: 140px; line-height: 1.2; }
+.dots { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); }
+.dot::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 6px; background: var(--line); }
+.dot.ok::before { background: var(--tide); box-shadow: 0 0 0 3px rgba(95,179,168,.2); }
+
+.banner { background: rgba(226,91,69,.12); border-left: 3px solid var(--fire); padding: 10px 14px; }
+
+.grid { display: grid; gap: 16px; margin-top: 16px;
+  grid-template-columns: 2fr 1fr;
+  grid-template-areas: "watch feed" "map feed" "forest sensors"; }
+.watch { grid-area: watch; display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
+.feed { grid-area: feed; }
+.map { grid-area: map; }
+.forest { grid-area: forest; }
+.sensors { grid-area: sensors; }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+.panel-head h2 { font: 600 22px/1 var(--head); margin: 0; }
+.meta { color: var(--muted); font-size: 13px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.empty { color: var(--muted); padding: 24px 8px; text-align: center; }
+
+.camera img { width: 100%; border-radius: 4px; display: block; background: #000; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chip { background: var(--line); padding: 2px 10px; border-radius: 12px; font-size: 13px; }
+.chip.warn { background: var(--amber); color: var(--mud); font-weight: 600; }
+.chip.quiet { color: var(--muted); }
+
+.meter { display: grid; grid-template-columns: 120px 1fr 44px; align-items: center; gap: 10px; margin: 14px 0; }
+.meter .bar { height: 10px; background: var(--mud); border-radius: 5px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--tide); transition: width .4s; }
+.meter i.hot { background: var(--fire); }
+.meter b { font: 600 18px var(--head); text-align: right; }
+
+.feed ol { list-style: none; margin: 0; padding: 0; max-height: 1080px; overflow-y: auto; }
+.feed li { border-left: 4px solid var(--line); padding: 8px 10px; margin-bottom: 6px; background: var(--mud); border-radius: 0 4px 4px 0; }
+.feed li strong { font: 600 18px var(--head); text-transform: capitalize; }
+.feed .row { display: flex; justify-content: space-between; gap: 8px; }
+.feed .small { font-size: 13px; color: var(--muted); }
+.sev-critical { border-left-color: var(--fire) !important; }
+.sev-high { border-left-color: var(--amber) !important; }
+.sev-medium { border-left-color: #c9b458 !important; }
+.sev-info { border-left-color: var(--tide) !important; }
+
+.map iframe { width: 100%; height: 440px; border: 0; border-radius: 4px; }
+
+.figures { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+.figures b { display: block; font: 700 28px/1.1 var(--head); }
+.figures span { color: var(--muted); font-size: 12px; line-height: 1.2; display: block; }
+.note { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 6px; }
+td { padding: 6px; border-bottom: 1px solid var(--line); }
+tr.hot td { color: var(--fire); font-weight: 600; }
+
+@media (max-width: 1000px) {
+  .grid { grid-template-columns: 1fr; grid-template-areas: "watch" "feed" "map" "forest" "sensors"; }
+  .watch { grid-template-columns: 1fr; }
+  .figures { grid-template-columns: repeat(2, 1fr); }
+  .feed ol { max-height: 400px; }
+}
+@media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }

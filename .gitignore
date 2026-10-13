@@ -1,0 +1,29 @@
+
+# Python
+backend/venv/
+**/__pycache__/
+*.py[cod]
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Node.js
+frontend/node_modules/
+
+# Frontend build
+frontend/dist/
+
+# Firebase local logs and emulator data
+firebase/*-debug.log
+firebase/emulator-data/
+
+# Windows and editor files
+Thumbs.db
+.DS_Store
+.vscode/
+
+# Logs
+*.log
