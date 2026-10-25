@@ -1,0 +1,23 @@
+
+# Python virtual environments
+backend/venv/
+venv/
+.venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Environment variables and secrets
+.env
+.env.*
+
+# Node.js dependencies
+node_modules/
+
+# Build output
+dist/
+
+# IDE files
+.vscode/
+.idea/
