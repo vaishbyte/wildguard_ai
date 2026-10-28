@@ -1,172 +1,193 @@
 # WildGuard AI – Wildlife & Illegal Logging Monitoring (Sundarbans)
 
-| Part | Tech |
+WildGuard AI is an AI-powered wildlife protection system designed to monitor threats in the Sundarbans. It combines computer vision, audio classification, forest-cover monitoring, virtual sensors, and real-time alerts to support wildlife protection and forest conservation.
+
+## Features and Technology Stack
+
+| Component | Technology |
 |---|---|
-| Human / animal detection + species | YOLOv8n (pretrained COCO) on webcam |
-| Chainsaw / engine / gunshot sound | YAMNet (Google AudioSet model) on microphone |
-| Tree cover loss | Global Forest Watch (UMD/Hansen) API → simulated fallback, statistics with NumPy, map with Folium |
-| Backend | FastAPI + WebSocket |
-| Database | Firebase Firestore **Local Emulator** (auto-falls back to in-memory if emulator is off) |
-| Dashboard | React (Vite) + Recharts |
-| Virtual hardware | Python sensor simulator + ESP32 on Wokwi |
+| Human and animal detection | YOLOv8n (pretrained COCO model) |
+| Audio threat detection | YAMNet (Google AudioSet model) |
+| Forest-cover monitoring | Global Forest Watch API, UMD/Hansen data, simulated fallback |
+| Backend | FastAPI, WebSocket |
+| Database | Firebase Firestore Emulator with in-memory fallback |
+| Dashboard | React, Vite, Recharts |
+| Virtual hardware | Python sensor simulator, ESP32 on Wokwi |
+| Mapping | Folium |
 
-Monitoring area: Sundarbans National Park, 21.9497, 88.8958, radius 25 km (change in `backend/.env`).3
+**Monitoring area:** Sundarbans National Park, coordinates `21.9497, 88.8958`, radius 25 km. Configure the area in `backend/.env` if supported by your application.
 
-Detectable species (pretrained model): bird, cat, dog, horse, sheep, cow, elephant, bear, zebra, giraffe.
+**Pretrained animal classes:** Bird, cat, dog, horse, sheep, cow, elephant, bear, zebra, and giraffe. Detection depends on the classes supported by the model.
 
----
+## Prerequisites
 
-## 0. Install once
+- Python 3.11
+- Node.js 18 or later
+- Java JDK 21 for the Firebase Emulator
+- Git
+- ngrok (optional, for Wokwi connectivity)
 
-- Python 3.11, Node.js 18+
-- Java JDK 21 (needed by Firebase Emulator) – https://adoptium.net
-- ngrok (only for Wokwi) – https://ngrok.com/download
+## 1. Start Firebase Emulator
 
-Run each PowerShell command **one line at a time**.
-
-## 1. Start Firebase Emulator (Terminal 1)
+Open Terminal 1:
 
 ```powershell
 npm install -g firebase-tools
-```
-```powershell
-cd wildguard-ai\firebase
-```
-```powershell
+cd firebase
 firebase emulators:start --project demo-wildguard
 ```
-Emulator UI: http://localhost:4000 → Firestore tab shows `alerts` and `sensor_nodes`.
-(`demo-` project needs no Google login. Data resets when emulator stops.)
 
-## 2. Start backend (Terminal 2)
+Open the Emulator UI at http://localhost:4000 and select Firestore to inspect collections.
+
+The demo project does not require Google authentication. Emulator data may reset when the emulator stops, depending on your persistence configuration.
+
+## 2. Start the Backend
+
+Open Terminal 2 from the project root:
 
 ```powershell
-cd wildguard-ai\backend
-```
-```powershell
+cd backend
 python -m venv venv
-```
-```powershell
 .\venv\Scripts\Activate.ps1
-```
-(If blocked: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, then activate again.)
-```powershell
 pip install -r requirements.txt
-```
-```powershell
 copy .env.example .env
-```
-```powershell
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
-Console should print `Using Firestore Emulator`. First run downloads `yolov8n.pt` and YAMNet (internet needed).
-API docs: http://localhost:8000/docs
 
-## 3. Start dashboard (Terminal 3)
+If PowerShell blocks virtual-environment activation, use:
 
 ```powershell
-cd wildguard-ai\frontend
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 ```
+
+Then activate the environment again.
+
+API documentation: http://localhost:8000/docs
+
+The first run may download the YOLO model and audio-model files. Internet access may be required.
+
+## 3. Start the Dashboard
+
+Open Terminal 3 from the project root:
+
 ```powershell
+cd frontend
 npm install
-```
-```powershell
 npm run dev
 ```
-Open http://localhost:5173
 
----
+Open the dashboard at http://localhost:5173.
 
-## 4. Test the project
+## 4. Test the Project
 
-| Test | How | Expected |
+| Test | Procedure | Expected result |
 |---|---|---|
-| Quick check | Click **Send test alert** on dashboard | Red "Chainsaw" alert appears instantly |
-| Human detection | Stand in front of webcam | Box on video + orange "Human" alert |
-| Species | Show an elephant/zebra/giraffe/bear/cow picture on your phone to the webcam | Species chip + "Animal" alert |
-| Chainsaw sound | Play a chainsaw video (YouTube) on phone speaker near the mic | Chainsaw meter rises above 25% → critical alert |
-| Engine sound | Play truck/motorbike engine sound | Engine meter + "Engine" alert |
-| Tree cover loss | Look at "Tree cover loss" panel and map heatmap | Yearly bars, trend line, anomaly years in red |
-| Firestore | Open http://localhost:4000 → Firestore | `alerts` documents being added |
+| Test alert | Click **Send test alert** on the dashboard | A test alert appears |
+| Human detection | Stand in front of the webcam | Human detection box and alert |
+| Animal detection | Show a supported animal image to the webcam | Animal detection result |
+| Audio detection | Play a suitable chainsaw or engine recording near the microphone | Audio classification and alert, if configured |
+| Forest monitoring | Inspect the forest-cover panel and map | Forest statistics and map visualization |
+| Firestore | Open the Emulator UI | Alert and sensor documents, if writes are configured |
 
-Alerts of the same type repeat only every 10 s (`ALERT_COOLDOWN_SEC`).
+Alerts of the same type may be rate-limited by `ALERT_COOLDOWN_SEC`.
 
-## 5. Virtual sensors – Python simulator (Terminal 4)
+## 5. Run the Virtual Sensor Simulator
+
+Open Terminal 4 from the project root:
 
 ```powershell
-cd wildguard-ai\simulator
-```
-```powershell
+cd simulator
 ..\backend\venv\Scripts\Activate.ps1
-```
-```powershell
 python sensor_sim.py
 ```
-Scenarios:
+
+Example scenarios:
+
 ```powershell
 python sensor_sim.py --scenario logging
-```
-```powershell
 python sensor_sim.py --scenario poaching
 ```
-Rules on backend: vibration ≥ 0.6 **and** sound ≥ 80 dB → chainsaw (critical); sound ≥ 75 dB → loud noise; PIR motion → intrusion.
 
-## 6. Virtual hardware – ESP32 on Wokwi
+The configured backend rules may use vibration, sound levels, and PIR motion to generate threat alerts. Check `backend/app/sensors.py` for the actual thresholds.
 
-Wokwi runs in the cloud, so it cannot reach `localhost`. Use ngrok to expose the backend.
+## 6. Run the ESP32 Simulation on Wokwi
 
-1. New terminal:
+Wokwi runs remotely, so it cannot normally access your computer's `localhost` address. Use ngrok to expose the backend temporarily.
+
+1. Start the backend on port 8000.
+2. Open another terminal and run:
+
    ```powershell
    ngrok http 8000
    ```
-   Copy the `https://....ngrok-free.app` URL.
-2. Go to https://wokwi.com → **New Project → ESP32**.
-3. Replace `sketch.ino` with `wokwi/sketch.ino`, and `diagram.json` with `wokwi/diagram.json`.
-4. In `sketch.ino` set `BACKEND_URL` to `https://<your-ngrok-url>/api/sensors/reading`.
-5. Press ▶ Start. Serial monitor shows readings every 3 s.
-6. Interact:
-   - Click PIR sensor → "Simulate motion" → intrusion alert
-   - Pot 1 = sound level, Pot 2 = tree vibration → turn both to max → chainsaw alert, red LED on
-7. Node `wokwi-esp32-1` appears in dashboard table and on the map.
 
-Circuit: PIR OUT→D27, Pot1 SIG→D34, Pot2 SIG→D35, LED→D2 via 220 Ω, all VCC→3V3, GND→GND.
+3. Copy the HTTPS forwarding URL provided by ngrok.
+4. Open [Wokwi](https://wokwi.com/) and create an ESP32 project.
+5. Copy the contents of `wokwi/sketch.ino` and `wokwi/diagram.json` into the corresponding Wokwi files.
+6. Configure `BACKEND_URL` in the sketch using your ngrok URL and the correct sensor endpoint.
+7. Start the simulation and inspect the serial monitor.
 
-## 7. Real tree cover data (optional)
+**Example circuit connections:**
 
-1. Create a free Global Forest Watch Data API key (docs: https://data-api.globalforestwatch.org).
-2. Put it in `backend/.env` → `GFW_API_KEY=...`
-3. Restart backend and open http://localhost:8000/api/forest?refresh=true
-   Source changes to "Global Forest Watch (UMD/Hansen) - real". If the call fails, it falls back to simulated data and shows the reason.
-   Note: spatial hotspots on the map are always simulated.
+- PIR OUT → GPIO 27
+- Potentiometer 1 signal → GPIO 34
+- Potentiometer 2 signal → GPIO 35
+- LED → GPIO 2 through a 220 Ω resistor
+- Sensor power → 3.3 V where appropriate
+- All grounds connected together
 
----
+Use only the pins and endpoint supported by your actual sketch and circuit configuration.
+
+## 7. Optional: Connect Real Forest-Cover Data
+
+1. Obtain an API key from the [Global Forest Watch Data API](https://data-api.globalforestwatch.org/).
+2. Configure `GFW_API_KEY` in `backend/.env`.
+3. Restart the backend.
+4. If implemented in your application, refresh forest statistics using:
+
+   http://localhost:8000/api/forest?refresh=true
+
+The application may use simulated data when the external service is unavailable. Verify the backend response to determine which data source is active.
 
 ## Troubleshooting
 
-| Problem | Fix |
+| Problem | Possible fix |
 |---|---|
-| Camera "not found" | Set `CAMERA_INDEX=1` (or 2) in `.env`, close other apps using webcam |
-| Microphone error | Windows Settings → Privacy → Microphone → allow desktop apps |
-| TensorFlow install fails | Use Python 3.11 exactly; or set `ENABLE_MIC=0` to run without audio |
-| Dashboard says backend not reachable | Backend must run on port 8000, or edit `frontend/.env` (`VITE_API_URL`) |
-| Store shows "Memory store" | Firebase Emulator not running on 127.0.0.1:8080 – start it before backend |
-| Map empty | Needs internet (map tiles & Leaflet load from CDN) |
-| Wokwi HTTP -1 | ngrok not running or wrong URL in sketch |
+| Webcam not detected | Try another `CAMERA_INDEX` in `.env` and close other camera applications |
+| Microphone error | Allow desktop applications to access the microphone in Windows settings |
+| TensorFlow installation failure | Use the supported Python version and check package compatibility |
+| Dashboard cannot reach backend | Verify that the backend is running on port 8000 and check the frontend API URL |
+| In-memory storage appears | Verify the Firebase Emulator address and backend configuration |
+| Map is empty | Check your internet connection and map tile configuration |
+| Wokwi returns HTTP -1 | Verify the ngrok URL, backend endpoint, and network connectivity |
 
-## Project structure
+## Project Structure
 
-```
+```text
 wildguard-ai/
-├── backend/app/
-│   ├── main.py              FastAPI routes, WebSocket, video stream
-│   ├── config.py / db.py    settings, Firestore emulator / memory store
-│   ├── events.py            alert creation, cooldown, broadcast
-│   ├── sensors.py           field sensor rules
-│   ├── detection/vision.py  YOLOv8 human + species
-│   ├── detection/audio.py   YAMNet chainsaw / engine / gunshot
-│   └── geo/forest.py, map_builder.py   tree cover loss stats + Folium map
-├── frontend/src/            React dashboard
-├── simulator/sensor_sim.py  virtual sensor nodes
-├── wokwi/                   ESP32 sketch + circuit
-└── firebase/                emulator config
+├── backend/
+│   └── app/
+│       ├── main.py
+│       ├── config.py
+│       ├── db.py
+│       ├── events.py
+│       ├── sensors.py
+│       ├── detection/
+│       │   ├── vision.py
+│       │   └── audio.py
+│       └── geo/
+│           ├── forest.py
+│           └── map_builder.py
+├── frontend/
+│   └── src/
+├── simulator/
+│   └── sensor_sim.py
+├── wokwi/
+│   ├── sketch.ino
+│   └── diagram.json
+└── firebase/
 ```
+
+## Project Goal
+
+WildGuard AI aims to combine AI-based threat detection, environmental monitoring, and real-time alerting to support wildlife protection and reduce illegal logging risks in the Sundarbans.
